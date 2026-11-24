@@ -1,8 +1,8 @@
 // Supabase Edge Function: send schedule notifications.
 //
-// Invoked once a minute by pg_cron. For every push subscription with
+// Invoked every 5 minutes by pg_cron. For every push subscription with
 // schedule_notifications on, it works out the baby's current age + schedule,
-// and if a schedule block starts at the current minute (in that device's
+// and if a schedule block starts in the current 5-minute slot (in that device's
 // timezone) it sends a web-push notification.
 //
 // Required secrets (set via the Supabase dashboard → Edge Functions → Secrets):
@@ -124,7 +124,13 @@ Deno.serve(async (req) => {
 
     const schedule = scheduleForAge(days);
     const babyName = baby.name || 'Baby';
-    const nowMin = hhmmToMin(hhmm);
+    // pg_cron calls this every 5 minutes (see cron.sql). Every notification time
+    // is a multiple of 5 (blocks start on :00/:30, lead times are 5/10/15, and
+    // a DB CHECK enforces the latter), so snap to the current 5-minute slot.
+    // This also tolerates a late start (cold start, queue delay) within the slot.
+    const rawMin = hhmmToMin(hhmm);
+    const nowMin = rawMin - (rawMin % 5);
+    const slot = minToHHMM(nowMin);
 
     const atStart = sub.notify_at_start !== false; // default on
     const before = sub.notify_before === true;
@@ -133,7 +139,7 @@ Deno.serve(async (req) => {
     const toSend: { title: string; body: string; tag: string }[] = [];
 
     if (atStart) {
-      const b = schedule.blocks.find(x => x.time === hhmm);
+      const b = schedule.blocks.find(x => x.time === slot);
       if (b) toSend.push({
         title: `⏰ ${b.title}`,
         body: `${babyName} · time for ${b.title.toLowerCase()} (${schedule.name})`,

@@ -20,7 +20,7 @@ const DEFAULT_REMINDER: FeedingReminderSettings = {
 };
 
 export default function SettingsPage() {
-  const { profile, setProfile, caregiver, caregivers, familyId, babyProfileId } = useApp();
+  const { profile, setProfile, caregiver, caregivers, removeCaregiver, familyId, babyProfileId } = useApp();
   const { user, signOut, claimInvite } = useAuth();
   const { theme, setTheme } = useTheme();
   const [name, setName] = useState(profile?.name || '');
@@ -136,9 +136,7 @@ export default function SettingsPage() {
     setJoining(false);
   };
 
-  const handleRemoveCaregiver = async (id: string) => {
-    await supabase.from('caregivers').delete().eq('id', id);
-  };
+  const handleRemoveCaregiver = (id: string) => removeCaregiver(id);
 
   const themeOptions: { value: ThemeMode; label: string; icon: React.ReactNode }[] = [
     { value: 'light', label: 'Light', icon: <Sun className="w-4 h-4" /> },

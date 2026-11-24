@@ -405,7 +405,7 @@ function AddBottleDialog({ open, onClose }: { open: boolean; onClose: () => void
 
 /* ── Main History Page ── */
 export default function History() {
-  const { feedings, deleteFeeding, diapers, deleteDiaper, sleeps, deleteSleep, pumpings, deletePumping, bottleFeeds, deleteBottleFeed, profile } = useApp();
+  const { feedings, deleteFeeding, diapers, deleteDiaper, sleeps, deleteSleep, pumpings, deletePumping, bottleFeeds, deleteBottleFeed, profile, hasOlderHistory, loadingOlderHistory, loadAllHistory } = useApp();
   const unit = profile?.unitPreference || 'oz';
   const fromOz = (oz: number) => unit === 'ml' ? oz * 29.5735 : oz;
 
@@ -689,6 +689,17 @@ export default function History() {
             )}
           </TabsContent>
         </Tabs>
+
+        {/* Only the last month loads up front; older entries load on request. */}
+        {hasOlderHistory && (
+          <button
+            onClick={loadAllHistory}
+            disabled={loadingOlderHistory}
+            className="w-full mt-4 bg-secondary text-secondary-foreground rounded-xl py-3 font-semibold font-nunito text-sm min-h-[48px] hover:opacity-90 transition-opacity disabled:opacity-50"
+          >
+            {loadingOlderHistory ? 'Loading…' : 'Show older entries'}
+          </button>
+        )}
       </div>
 
       {/* Dialogs */}
